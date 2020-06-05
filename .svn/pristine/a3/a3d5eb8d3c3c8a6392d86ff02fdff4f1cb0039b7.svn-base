@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>提交资料</title>
+		<link rel="icon" href="favicon.ico">
+		<link rel="stylesheet" type="text/css" href="plugins/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="css/public.css">
+		<link rel="stylesheet" type="text/css" href="css/process.css">
+		
+		<script src="plugins/jquery.min.js" type="text/javascript"></script>
+		<script src="plugins/bootstrap.min.js" type="text/javascript"></script>
+		<script src="plugins/messages_zh.js" type="text/javascript"></script>
+		<script src="plugins/jquery.validate.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $.validator.setDefaults({
+            submitHandler: function() {
+                alert("提交");
+            }
+        });
+
+        $(function(){
+			$("#data_form").validate({
+				rules:{
+                        username:"required",
+					},
+				message:{
+ 						username:"用户名不能为空"
+					}
+		    });
+        });
+        </script>
+	</head>
+
+	<body>
+		<!--head-->
+		<div class="loginnav">
+			<nav class="nav navbar-default">
+				<div class="container">
+					<div class="navbar-header">
+						<a class="navbar-brand" href="index.html" target="_blank"><img src="img/icon/logo.png"></a>
+						<span class="logintitle">云商系统</span>
+					</div>
+				</div>
+			</nav>
+		</div>
+		<!--process-->
+		<div class="container">
+			<div class="process">
+				<div class="bar">
+					<div class="line"></div>
+					<dl class="steps  done">
+						<dt class="step">1</dt>
+						<dd>注册</dd>
+					</dl>
+					<dl class="steps done">
+						<dt class="step">2</dt>
+						<dd>提交资料</dd>
+					</dl>
+					<dl class="steps">
+						<dt class="step">3</dt>
+						<dd>审核</dd>
+					</dl>
+					<dl class="steps">
+						<dt class="step">4</dt>
+						<dd>完成</dd>
+					</dl>
+				</div>
+			    <!--form-->
+			    <form action="" class="form-horizonal" id="data_form">
+			    	<div class="form-item">
+			    		<h4>用户信息</h4>
+			    		<div class="forms">
+			    			<div class="col-md-6">
+			    				<div class="form-group">
+									<label for="" class="col-md-3 control-label">用户名<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text" name="username" class="form-control"/>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">用户姓名<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control required" id="username" name="username"  />
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">证件类型<i>*</i></label>
+									<div class="col-md-8">
+										<select class="form-control">
+										  <option>身份证</option>
+										  <option>营业执照号码</option>
+										  <option>组织结构代码</option>
+										  <option>护照</option>
+										  <option>其他</option>
+										</select>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">证件照片<i>*</i></label>
+									<div class="col-md-5">
+										<input type="text"  class="form-control required" name="userphoto"  />
+									</div>
+									<div class="col-md-3">
+										<button class="btn btn-default">选择图片</button>
+									</div>
+								</div>
+			    			</div>
+			    		    <div class="col-md-6">
+			    				<div class="form-group">
+									<label for="" class="col-md-3 control-label">密码<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control"/>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">英文名</label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control"  />
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">证件号码<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control required" name="usercode" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">MSN/QQ<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control required" />
+									</div>
+								</div>
+								
+			    			</div>
+			    		</div>
+			    		
+			    	</div>
+			    	<div class="form-item">
+			    		<h4>公司信息</h4>
+			    		<div class="forms">
+			    			<div class="col-md-6">
+			    				<div class="form-group">
+									<label for="" class="col-md-3 control-label">公司名称</label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control " name="company"/>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">地址<i>*</i></label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control required" name="address"  />
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">传真号</label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control" />
+									</div>
+								</div>
+								
+			    			</div>
+			    		    <div class="col-md-6">
+			    				
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">联系人</label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control"  />
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="" class="col-md-3 control-label">电话</label>
+									<div class="col-md-8">
+										<input type="text"  class="form-control"  />
+									</div>
+								</div>
+								
+								
+			    			</div>
+			    		</div>
+			    	</div>
+			    	<div class="form-group">
+			    		<div class="col-md-offset-2 ">
+			    		<!-- <a class="btn btn-danger btn-submit" href="process-step3.html" target="_blank">提交</a> -->
+			    		<input class="btn btn-danger btn-submit" type="submit" value="提&nbsp;&nbsp;&nbsp;&nbsp;交" />
+			    	</div>
+			    	</div>
+			    	
+			    </form>
+			</div>
+		</div>
+		<!--foot-->
+		<footer>
+			<section class="copyright">
+				<div class="container">
+					<p class="text-center">地址：北京市昌平区建材城西路金燕龙办公楼一层 邮编：100096 电话：400-618-4000 传真：010-82935100 </p>
+					<p class="text-center">京ICP备08001421号京公网安备110108007702</p>
+				</div>
+			</section>
+		</footer>
+		<script src="plugins/jquery.min.js"></script>
+		<script src="plugins/jquery.validate.js"></script>
+		<script src="http://static.runoob.com/assets/jquery-validation-1.14.0/dist/localization/messages_zh.js"></script>
+		<script>
+			$(function(){
+				$("#data_form").validate({	
+					   message:{
+							username:'用户姓名不能为空',
+							email:{
+								required:'请输入正确的邮箱',
+								email:'请输入'
+							}
+						}					
+				});
+			})
+		</script>
+	</body>
+
+</html>

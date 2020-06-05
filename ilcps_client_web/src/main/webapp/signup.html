@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta content="application/xhtml+xml;charset=UTF-8" http-equiv="Content-Type">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+		<title>国际物流-注册</title>
+
+		<link rel="icon" href="favicon.ico">
+		<link rel="stylesheet" type="text/css" href="plugins/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="css/public.css">
+		<link rel="stylesheet" type="text/css" href="css/signup.css">
+
+		<script src="plugins/jquery.min.js" type="text/javascript"></script>
+		<script src="plugins/bootstrap.min.js" type="text/javascript"></script>
+		<script src="plugins/messages_zh.js" type="text/javascript"></script>
+		<script src="plugins/jquery.validate.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $.validator.setDefaults({
+            submitHandler: function() {
+                $.ajax({
+                        url:"user/userAction_register",
+                        data:$("#signupForm").serialize(),
+                        dataType:"json",
+                        type:"POST",
+                        success:function(data){
+							if(data=='2'){
+                               location.href="process-step2.html";
+						    }else if(data=='0'){
+								alert("验证码输入错误");
+							}
+						    else if(data='1')
+						    	{
+						    	alert("手机验证码输入错误");
+						    	}
+                        }
+                       });
+            }
+        });
+        var clock = '';
+        var nums = 60;
+        var btn;
+
+        function doLoop() {
+			nums--;
+			btn = $("#PhoneVercodeBtn");
+			if (nums > 0) {
+				$("#PhoneVercodeBtn").text(nums+ '秒后重新获取');
+			} else {
+				clearInterval(clock); //清除js定时器
+				$("#PhoneVercodeBtn").attr("disabled",false);
+				$("#PhoneVercodeBtn").text('重新获取验证码');
+				nums = 60; //重置 时间
+			}
+	   }
+        
+        $(
+           //实现校验     
+           function() {
+             $("#signupForm").validate({
+        	    rules: {
+        	    	telephone: "required",
+        	    	vercode:"required",
+        	    	phoneVercode:{"required":true,"number":true,"rangelength":[6,6]},
+        	    	email:{"required":true,email:true}
+        	    },
+        	    messages: {
+        	    	telephone: "请输入您的名字",
+        	    	vercode:"请输入验证码",
+        	    	phoneVercode:{
+						required:"手机验证码不能为空",
+						number:"手机验证码必须是数字",
+						rangelength:"手机验证码长度是6位"
+            	    },
+        	    	email:"请输入一个正确的邮箱"
+        	    }
+        	});
+
+
+           //实现手机验证码的发送
+           $("#PhoneVercodeBtn").click(function(){
+        	 var regex = /^1(3|5|7|8)\d{9}$/;
+             var telephone = $("#telephone").val();
+   			 if(!regex.test(telephone)){
+      				alert("手机输入有误!");
+      				return false;
+   			 }
+   			 //如果正确，就发送请求，要求获得手机验证码
+   			 $.post("user/userAction_sendVerCode",{'telephone':telephone},function(rtndata){});
+   			 
+   			 btn = $(this);
+   			 $(this).attr("disabled",true);
+   			 $(this).text(nums + '秒后重新获取');
+   			 clock = setInterval("doLoop()", 10); //一秒执行一次
+
+   			 return false;
+             });
+
+
+           //绑定随机验证码的事件
+           $("#pic_code").click(function(){
+			   $("#pic_code").attr("src","user/userAction_genActiveCode?date="+new Date());
+           });
+          }
+       );
+
+        </script>
+		<!--[if IE]>
+	    <script  type="text/javascript" src="js/html5.js"></script>
+	    <script  type="text/javascript" src="js/respond.min.js"></script>
+	    <![endif]-->
+		<style>
+			.error{
+			  color: red;
+			}
+		</style>
+	</head>
+
+	<body>
+			<!--head-->
+			<div class="loginnav">
+				<nav class="nav navbar-default">
+					<div class="container">
+						<div class="navbar-header">
+							<a class="navbar-brand" href="index.html" target="_blank"><img src="img/icon/logo.png"></a>
+							<span class="logintitle">云商系统</span>
+						</div>
+					</div>
+				</nav>
+			</div>
+			<!--signup-box-->
+			<div class="container">
+			    <div class="signup-box">				
+					<h4>用户注册</h4>
+					<form  class="form-horizontal" id="signupForm">
+						<div class="form-group">
+							<label for="" class="col-md-2 control-label">手机号：</label>
+							<div class="col-md-6">
+								<input type="text" id="telephone" name="telephone" class="form-control" placeholder="输入手机号码" />
+							</div>
+
+						</div>
+						<div class="form-group">
+							<label for="" class="col-md-2 control-label">验证码：</label>
+							<div class="col-md-4">
+								<input type="text" id="vercode" name="vercode" class="form-control" placeholder="填写右侧验证码" />
+							</div>
+							<div class="col-md-2">
+								<!-- <img src="img/GetValidateCode.jpg"/> -->
+								<img id="pic_code" src="user/userAction_genActiveCode" alt="请点击刷新验证码" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="" class="col-md-2 control-label">手机验证码：</label>
+							<div class="col-md-4">
+								<input type="text" id="phoneVercode" name="phoneVercode" class="form-control" placeholder="输入手机验证码" />
+							</div>
+							<div class="col-md-2">
+								<button id="PhoneVercodeBtn" class="btn btn-info btn-getcode">获取验证码</button>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="" class="col-md-2 control-label">邮箱：</label>
+							<div class="col-md-4">
+								<input type="text" id="email" name="email" class="form-control" placeholder="输入邮箱号" />
+							</div>
+							
+						</div>
+						
+						
+						<div class="form-group">
+							<div class="col-md-offset-2 col-md-4">
+								<!-- <a class="btn btn-danger btn-block btn-signup" href="process-step2.html" target="_blank" >注&nbsp;&nbsp;&nbsp;&nbsp;册</a> -->
+							    <input class="btn btn-danger btn-block btn-signup" type="submit" value="注&nbsp;&nbsp;&nbsp;&nbsp;册" />
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+			<!--foot-->
+			<footer>
+				<section class="copyright size12">
+					<div class="container">
+						<p class="text-center">地址：北京市昌平区建材城西路金燕龙办公楼一层 邮编：100096 电话：400-618-4000 传真：010-82935100 </p>
+						<p class="text-center">京ICP备08001421号京公网安备110108007702</p>
+					</div>
+				</section>
+			</footer>
+		
+	</body>
+
+</html>

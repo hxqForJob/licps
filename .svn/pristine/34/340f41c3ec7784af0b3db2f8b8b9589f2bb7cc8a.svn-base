@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>错误处理页面</title>
+		<link rel="icon" href="favicon.ico">
+		<link rel="stylesheet" type="text/css" href="plugins/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="css/public.css">
+		<link rel="stylesheet" type="text/css" href="css/process.css">
+	</head>
+	<body>
+		<!--head-->
+		<div class="loginnav">
+			<nav class="nav navbar-default">
+				<div class="container">
+					<div class="navbar-header">
+						<a class="navbar-brand" href="index.html" target="_blank"><img src="img/icon/logo.png"></a>
+						<span class="logintitle">云商系统</span>
+					</div>
+				</div>
+			</nav>
+		</div>
+		<!--process-->
+		<div class="container">
+			    <h1 class="center-block">错误了，请联系客服人员</h1>
+				<div class="shen-box">
+					<p>如长时间不能通过，请联系销售助理进行开通,添加时请备注上您的手机号。</p>
+					<div class="link">
+						<p>广州销售助理QQ：2853276737</p>
+						<p>广州销售助理QQ：2853276737</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--foot-->
+		<footer>
+			<section class="copyright">
+				<div class="container">
+					<p class="text-center">地址：北京市昌平区建材城西路金燕龙办公楼一层 邮编：100096 电话：400-618-4000 传真：010-82935100 </p>
+					<p class="text-center">京ICP备08001421号京公网安备110108007702</p>
+				</div>
+			</section>
+		</footer>
+	</body>
+</html>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans    
+	http://www.springframework.org/schema/beans/spring-beans.xsd    
+	http://www.springframework.org/schema/aop    
+	http://www.springframework.org/schema/aop/spring-aop.xsd    
+	http://www.springframework.org/schema/tx    
+	http://www.springframework.org/schema/tx/spring-tx.xsd    
+	http://www.springframework.org/schema/context    
+	http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<!-- 配置Spring整合shiro -->
+	<!-- 配置安全管理器 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<!-- 自己编写一个realm域对象 -->
+		<property name="realm" ref="authRealm"/>
+	</bean>
+	
+	<!-- 编写realm类 -->
+	<bean id="authRealm" class="com.hxq.web.action.shiro.AuthRealm">
+		<!-- 注入密码比较器对象 -->
+		<property name="credentialsMatcher" ref="passwordMatcher"/>
+	</bean>
+	
+	<!-- 密码比较器类 -->
+	<bean id="passwordMatcher" class="com.hxq.web.action.shiro.PasswordMatcher"/>
+	
+	<!-- Spring框架需要整合shiro安全框架 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- 注入安全管理器 -->
+		<property name="securityManager" ref="securityManager"/>
+		<!-- 登录页面 -->
+		<property name="loginUrl" value="/index.jsp"/>
+		<!-- 认证成功了，跳转的页面
+		<property name="successUrl" value=""/>
+		-->
+		<!-- 没有权限的跳转页面 -->
+		<property name="unauthorizedUrl" value="/homeAction_noauthor"/>
+		<!-- 定义访问的规则 -->
+		<property name="filterChainDefinitions">
+            <!-- /**代表下面的多级目录也过滤 -->
+            <value>
+				/index.jsp* = anon
+				/home* = anon
+				/sysadmin/login/login.jsp* = anon
+				/sysadmin/login/loginAction_logout* = anon
+				/login* = anon
+				/logout* = anon
+				/components/** = anon
+				/css/** = anon
+				/img/** = anon
+				/js/** = anon
+				/plugins/** = anon
+				/images/** = anon
+				/js/** = anon
+				/make/** = anon
+				/skin/** = anon
+				/stat/** = anon
+				/ufiles/** = anon
+				/validator/** = anon
+				/resource/** = anon
+				/sysadmin/deptAction_* = perms["部门管理"]
+				/sysadmin/deptAction_delete* = perms["删除部门"]
+				/sysadmin/deptAction_toupdate* = perms["修改部门"]
+				/sysadmin/deptAction_tocreate* = perms["新增部门"]
+				/sysadmin/deptAction_toview* = perms["查看部门"]
+				/sysadmin/userAction_list* = perms["用户管理"]
+				 /sysadmin/userAction_torole* = perms["角色分配"]
+				/sysadmin/userAction_delete* = perms["删除用户"]
+				/sysadmin/userAction_toupdate* = perms["修改用户"]
+				/sysadmin/userAction_tocreate* = perms["新增用户"]
+				/sysadmin/userAction_toview* = perms["查看用户"]
+				/sysadmin/roleAction_list* = perms["角色管理"]
+				/sysadmin/roleAction_tomodule* = perms["权限分配"] 
+				/sysadmin/roleAction_delete* = perms["删除角色"]
+				/sysadmin/roleAction_toupdate* = perms["修改角色"]
+				/sysadmin/roleAction_tocreate* = perms["新增角色"]
+				/sysadmin/roleAction_toview* = perms["查看角色"]
+				/sysadmin/moduleAction_list* = perms["模块管理"]
+				/sysadmin/moduleAction_delete* = perms["删除模块"]
+				/sysadmin/moduleAction_toupdate* = perms["修改模块"]
+				 /sysadmin/moduleAction_tocreate* = perms["新增模块"]
+				/sysadmin/moduleAction_toview* = perms["查看模块"]
+				/cargo/contractAction_list* = perms["购销合同"]
+				/cargo/contractAction_toview* = perms["查看购销合同"]
+				/cargo/contractAction_tocreate* = perms["新增购销合同"]
+				/cargo/contractAction_toupdate* = perms["修改购销合同"]
+				/cargo/contractAction_delete* = perms["删除购销合同"]
+				/cargo/contractAction_submit* = perms["提交购销合同"]
+				/cargo/contractAction_cancel* = perms["取消购销合同"]
+				/cargo/contractAction_print* = perms["打印购销合同"]
+				/cargo/contractProductAction_tocreate* = perms["新增购销合同货物"]
+				/cargo/contractProductAction_toupdate* = perms["修改购销合同货物"]
+				/cargo/contractProductAction_delete* = perms["删除购销合同货物"]
+				/cargo/extCproductAction_tocreate* = perms["新增货物附件"]
+				/cargo/extCproductAction_toupdate* = perms["修改货物附件"]
+				/cargo/extCproductAction_delete* = perms["删除货物附件"]
+				/** = authc   
+				/*.* = authc
+            </value>
+        </property>
+	</bean>
+	
+	<!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+    <!-- 生成代理，通过代理进行控制 -->
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor">
+        <property name="proxyTargetClass" value="true"/>
+    </bean>
+    
+    <!-- 安全管理器 -->
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+	
+</beans>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

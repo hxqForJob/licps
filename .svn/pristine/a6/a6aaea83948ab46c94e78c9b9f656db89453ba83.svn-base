@@ -1,0 +1,63 @@
+
+html,body{
+	font-family: "微软雅黑";
+	background-color: #F2F2F2;
+	
+}
+/*head*/
+.loginnav {
+	background: #fff;
+}
+.logintitle {
+	font-size: 18px;
+	line-height: 50px;
+	padding-left: 10px;
+	color: #999;
+}
+
+.loginnav .navbar-default {
+	margin-bottom: 0;
+	padding: 10px;
+	background: #fff;
+}
+
+.loginnav .navbar-brand {
+	padding: 0
+}
+/*signup-box*/
+.signup-box {
+	padding: 0 0 25px ;
+	margin:15px 0;
+	border: 1px solid #e6e3e3;
+	background-color: #fff;
+	
+}
+.signup-box h4 {
+	background: #b4b4b4;
+    color: #fff;
+    font-size: 18px;
+    padding: 0 0 0 22px;
+    line-height: 44px;
+}
+.signup-box .form-horizontal {
+	margin-top: 25px;
+}
+.signup-box .form-group {
+	margin: 0;
+	margin-bottom: 25px;
+}
+.signup-box .form-horizontal .control-label {
+	font-size: 15px;
+	font-weight: normal;
+}
+
+.btn-signup {
+    font-size: 16px;
+    background-color: #e84e0e;
+	
+}
+/*footer*/
+.copyright {
+	line-height: 26px;
+	color: #999;
+}

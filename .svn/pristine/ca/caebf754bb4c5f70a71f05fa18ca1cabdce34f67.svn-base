@@ -1,0 +1,581 @@
+package com.hxq.web.action.cargo;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaBuilder.In;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.Namespace;
+import org.apache.struts2.convention.annotation.Result;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+
+import com.alibaba.fastjson.JSON;
+import com.hxq.domain.Contract;
+import com.hxq.domain.Dept;
+import com.hxq.domain.Export;
+import com.hxq.domain.ExportProduct;
+import com.hxq.domain.User;
+import com.hxq.server.export.domain.ExportProductResult;
+import com.hxq.server.export.domain.ExportProductVo;
+import com.hxq.server.export.domain.ExportResult;
+import com.hxq.server.export.domain.ExportVo;
+import com.hxq.service.ContractService;
+import com.hxq.service.ExportProductService;
+import com.hxq.service.ExportService;
+import com.hxq.utils.ContractState;
+import com.hxq.utils.Page;
+import com.hxq.utils.SysConstant;
+import com.hxq.utils.UtilFuns;
+import com.hxq.web.action.BaseAction;
+import com.opensymphony.xwork2.ModelDriven;
+
+import cn.itcast.export.webservice.IEpService;
+
+/**
+ * 报运控制器
+ * @author 强仔
+ *
+ */
+@Namespace("/cargo")
+@Result(name="toExportListView",type="redirectAction",location="exportAction_list")
+public class ExportAction extends BaseAction implements ModelDriven<Export> {
+
+	private Export model=new Export();
+	
+	@Autowired
+	private ExportService exportService;
+	
+	@Autowired
+	private ContractService contractService;
+	
+	@Autowired
+	private ExportProductService exportProductService;
+	
+	@Autowired
+	private IEpService epService;
+	
+	private  Page page=new Page();
+	
+	
+	
+	public Page getPage() {
+		return page;
+	}
+
+
+
+	public void setPage(Page page) {
+		this.page = page;
+	}
+
+
+
+	@Override
+	public Export getModel() {
+		// TODO Auto-generated method stub
+		return model;
+	}
+	
+	/**
+	 * 查询合同管理视图,细粒度控制
+	 * @return
+	 * @throws Exception
+	 */
+	@Action(value="exportAction_contractList",results={@Result(name="toConlist",location="/WEB-INF/pages/cargo/export/jContractList.jsp")})
+	public String toContarctList() throws Exception {
+		
+		// 获取当前用户,用来细粒度控制
+				final User currentUser = (User) session.get(SysConstant.CURRENT_USER_INFO);
+				// 获取当前用户的级别
+				final Integer degree = currentUser.getUserinfo().getDegree();
+
+				Specification<Contract> spec = new Specification<Contract>() {
+
+					@Override
+					public Predicate toPredicate(Root<Contract> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+						// TODO Auto-generated method stub
+						Predicate predicate;
+						switch (degree) {
+						case 4: //普通員工
+							predicate=cb.and(cb.equal(root.get("createBy").as(String.class),currentUser.getId()),cb.equal(root.get("state").as(Integer.class), ContractState.SUBMMIT));
+							break;
+						case 3://本部门经理
+							predicate=cb.and(cb.equal(root.get("createDept").as(String.class),currentUser.getDept().getId()),cb.equal(root.get("state").as(Integer.class), ContractState.SUBMMIT));
+							break;
+						case 2://部门总经理
+							//当前用户的所在部门和子部门
+							Set<String> depts=new HashSet<>();
+							depts.add(currentUser.getDept().getId());
+							//递归获取depts
+							getAllDepts(depts, currentUser.getDept());
+							//添加in条件
+							 In<String> in = cb.in(root.get("createDept").as(String.class));
+							 for (String string : depts) {
+								in.value(string);
+							}
+							predicate=cb.and(cb.equal(root.get("state").as(Integer.class), ContractState.SUBMMIT),in);
+							break;
+						case 1://副总裁
+							predicate=cb.equal(root.get("state").as(Integer.class), ContractState.SUBMMIT);
+							break;
+
+						default://总裁
+							predicate=cb.equal(root.get("state").as(Integer.class), ContractState.SUBMMIT);
+							break;
+						}
+						return predicate;
+					}
+				};
+		
+//		Specification<Contract> spec = new Specification<Contract>() {
+//
+//			@Override
+//			public Predicate toPredicate(Root<Contract> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+//				// TODO Auto-generated method stub
+//				return cb.equal(root.get("state").as(Integer.class), 1);
+//			}
+//		};
+		org.springframework.data.domain.Page<Contract> findPage = contractService.
+				findPage(spec, 
+						new PageRequest(page.getPageNo()-1, page.getPageSize()));
+		page.setResults(findPage.getContent());
+		page.setTotalRecord(findPage.getTotalElements());
+		page.setUrl("exportAction_contractList");
+		push(page);
+		return "toConlist";
+	}
+	/**
+	 * 报运视图
+	 * @return
+	 */
+	@Action(value="exportAction_tocreate",results={@Result(name="toCreate",location="/WEB-INF/pages/cargo/export/jExportCreate.jsp")})
+	public String toCreate()
+	{
+		return "toCreate";
+	}
+	
+	/**
+	 * 保存报运单
+	 * @return
+	 */
+	@Action(value="exportAction_insert")
+	public String toInsert()
+	{
+		//获取当前登录用户
+		User currentUser = (User) session.get(SysConstant.CURRENT_USER_INFO);
+		model.setCreateTime(new Date());
+		model.setCreateBy(currentUser.getId());
+		model.setCreateDept(currentUser.getDept().getId());
+		exportService.saveOrUpdate(model);
+		return "toExportListView";
+	}
+	
+	/**
+	 * 查询出口报运视图
+	 * @return
+	 */
+	@Action(value="exportAction_list",results={@Result(name="toElist",location="/WEB-INF/pages/cargo/export/jExportList.jsp")})
+	public String toList()
+	{
+		
+		org.springframework.data.domain.Page<Export> findPage = exportService.
+				findPage(null, 
+						new PageRequest(page.getPageNo()-1, 
+								page.getPageSize()));
+		page.setResults(findPage.getContent());
+		page.setTotalRecord(findPage.getTotalElements());
+		page.setUrl("exportAction_list");
+		push(page);
+		return "toElist";
+	}
+	
+	
+	/**
+	 * 查看报运单
+	 * @return
+	 */
+	@Action(value="exportAction_toview",results={@Result(name="toWatchExport",location="/WEB-INF/pages/cargo/export/jExportView.jsp")})
+	public String toWathcView()
+	{
+		Export export = exportService.get(model.getId());
+		push(export);
+		return "toWatchExport";
+		
+	}
+	
+	/**
+	 * 修改视图
+	 * @return
+	 */
+	@Action(value="exportAction_toupdate",results={@Result(name="toUpdateView",location="/WEB-INF/pages/cargo/export/jExportUpdate.jsp")})
+	public String toUpdateView()
+	{
+		Export export = exportService.get(model.getId());
+		push(export);
+		return "toUpdateView";
+	}
+	
+	/**
+	 * 删除报运单
+	 * @return
+	 */
+	@Action(value="exportAction_delete")
+	public String delete()
+	{
+		String [] ids=model.getId().split(", ");
+		exportService.delete(ids);
+		return "toExportListView";
+	}
+	
+	/**
+	 * 提交
+	 * @return
+	 */
+	@Action(value="exportAction_submit")
+	public String submit()
+	{
+		Export export = exportService.get(model.getId());
+		export.setState(1);
+		exportService.saveOrUpdate(export);
+		return "toExportListView";
+	}
+	
+	/**
+	 * 取消
+	 * @return
+	 */
+	@Action(value="exportAction_cancel")
+	public String cancel()
+	{
+		Export export = exportService.get(model.getId());
+		export.setState(0);
+		exportService.saveOrUpdate(export);
+		return "toExportListView";
+	}
+	
+	/**
+	 * 获取报运单下的货物
+	 * @return
+	 * @throws IOException 
+	 */
+	@Action("exportAction_getExProduct")
+	public String getExProduct() throws IOException
+	{
+		List<ExportProduct> exProducts = exportProductService.find(new Specification<ExportProduct>() {
+
+			@Override
+			public Predicate toPredicate(Root<ExportProduct> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+				// TODO Auto-generated method stub
+				return cb.equal(root.get("export").get("id"), model.getId());
+			}
+		});
+		//addTRRecord(objId, id, productNo, cnumber, grossWeight, netWeight, sizeLength, sizeWidth, sizeHeight, exPrice, tax)
+		List<Map> maps= new ArrayList<>();
+		for (ExportProduct ep : exProducts) {
+			HashMap<String, Object> hashMap=new HashMap<>();
+			hashMap.put("id",UtilFuns.convertNull(ep.getId()));
+			hashMap.put("productNo", UtilFuns.convertNull(ep.getProductNo()));
+			hashMap.put("cnumber", UtilFuns.convertNull(ep.getCnumber()));
+			hashMap.put("grossWeight", UtilFuns.convertNull(ep.getGrossWeight()));
+			hashMap.put("netWeight", UtilFuns.convertNull(ep.getNetWeight()));
+			hashMap.put("sizeLength", UtilFuns.convertNull(ep.getSizeLength()));
+			hashMap.put("sizeWidth", UtilFuns.convertNull(ep.getSizeWidth()));
+			hashMap.put("sizeHeight", UtilFuns.convertNull(ep.getSizeHeight()));
+			hashMap.put("exPrice", UtilFuns.convertNull(ep.getExPrice()));
+			hashMap.put("tax", UtilFuns.convertNull(ep.getTax()));
+			maps.add(hashMap);
+		}
+		String jsonString = JSON.toJSONString(maps);
+		HttpServletResponse response = ServletActionContext.getResponse();
+		response.getWriter().write(jsonString);
+		return NONE;
+	}
+	/**
+	 * 修改逻辑
+	 * @return
+	 * @throws Exception
+	 */
+	@Action(value="exportAction_update")
+	public String update() throws Exception {
+		// TODO Auto-generated method stub
+		
+		// 出口报运单的保存
+		Export export = exportService.get(model.getId());
+		export.setInputDate(model.getInputDate());
+		export.setLcno(model.getLcno());
+		export.setConsignee(model.getConsignee());
+		export.setShipmentPort(model.getShipmentPort());
+		export.setDestinationPort(model.getDestinationPort());
+		export.setTransportMode(model.getTransportMode());
+		export.setPriceCondition(model.getPriceCondition());
+		export.setMarks(model.getMarks());
+		export.setRemark(model.getRemark());
+		
+		exportService.saveOrUpdate(export);
+
+		// 出口报运修改的商品
+		for (int i = 0; i < mr_id.length ; i++) {
+			if(mr_changed[i].equals("1")){  // 修改过的进行操作 1代表修改
+				ExportProduct exportProduct = exportProductService.get(mr_id[i]);
+				exportProduct.setCnumber(mr_cnumber[i]);
+				exportProduct.setGrossWeight(mr_grossWeight[i]);
+				exportProduct.setNetWeight(mr_netWeight[i]);
+				exportProduct.setSizeLength(mr_sizeLength[i]);
+				exportProduct.setSizeWidth(mr_sizeWidth[i]);
+				exportProduct.setSizeHeight(mr_sizeHeight[i]);
+				exportProduct.setExPrice(mr_exPrice[i]);
+				exportProduct.setTax(mr_tax[i]);
+				
+				exportProductService.saveOrUpdate(exportProduct);
+			}
+		}
+		
+		return "toExportListView";
+	}
+	/**
+	 * 电子报运  Restful风格方法
+	 * @return
+	 * @throws Exception
+	 */
+	@Action(value="exportAction_exportE")	
+	public String exportE_Rs() throws Exception {
+		// TODO Auto-generated method stub
+		String[] ids=model.getId().split(", ");
+		for (String id : ids) {
+				// 出口报运单对象
+				Export export = exportService.get(id);
+				WebClient client = WebClient.create("http://localhost:8080/jk_export/ws/export/user");
+				
+				ExportVo exportVo = new ExportVo();
+				// export拷贝到exportVo
+				BeanUtils.copyProperties(export, exportVo);
+				// 拷贝后不相同的属性需要手动赋值
+				exportVo.setExportId(export.getId());
+				
+				// 封装报运单下的货物对象
+				Set<ExportProduct> exportProducts = export.getExportProducts();
+				HashSet<ExportProductVo> products = new HashSet<ExportProductVo>();
+				for (ExportProduct ep : exportProducts) {
+					ExportProductVo epVo = new ExportProductVo();
+					BeanUtils.copyProperties(ep, epVo);
+					epVo.setExportProductId(ep.getId());
+					epVo.setExportId(export.getId());  //设置报运单货物对应的报运单号
+					
+					products.add(epVo);
+				}
+				
+				exportVo.setProducts(products);
+				client.post(exportVo);  
+				
+				WebClient returnClient = WebClient.create("http://localhost:8080/jk_export/ws/export/user/" + exportVo.getId());
+				ExportResult exportResult = returnClient.get(ExportResult.class);
+				
+				//根据返回的id查询数据库对象
+				Export exportDB = exportService.get(exportResult.getExportId());
+				exportDB.setState(exportResult.getState());
+				exportDB.setRemark(exportResult.getRemark());
+				exportService.saveOrUpdate(exportDB);
+				
+				Set<ExportProductResult> products2 = exportResult.getProducts();
+				for (ExportProductResult epResult : products2) {
+					ExportProduct ep = exportProductService.get(epResult.getExportProductId());
+					ep.setTax(epResult.getTax());
+					exportProductService.saveOrUpdate(ep);
+				}
+		}
+			
+		
+		return "toExportListView";
+	}
+	
+	
+	/**
+	 * 电子报运  ws 方法
+	 * @return
+	 * @throws Exception
+	 */
+	/**
+	   * {
+			 exportId:"",
+			 state:"",
+			 remark:"",
+			 products:[
+			            {
+			               exportProductId:"",
+			               tax:""
+			            },
+				   {
+			               exportProductId:"",
+			               tax:""
+			            }
+			          ]
+			}
+	   * 
+	   */
+	@Action(value="exportAction_exportEWS")	
+	public String exportE_WS() throws Exception {
+		String[] ids=model.getId().split(", ");
+		for (String id : ids) {
+			Export export = exportService.get(id);
+			HashMap exportMap=new HashMap<>();
+			exportMap.put("exportId", export.getId());
+			exportMap.put("state", export.getState());
+			exportMap.put("remark",export.getRemark());
+			exportMap.put("boxNums",export.getBoxNums());
+			exportMap.put("grossWeights", export.getGrossWeights());
+			List<HashMap> products=new ArrayList<>();
+			for (ExportProduct product : export.getExportProducts()) {
+				HashMap productMap=new HashMap<>();
+				productMap.put("exportProductId", product.getId());
+				productMap.put("cnumber", product.getCnumber());
+				productMap.put("factoryId", product.getFactory().getId());
+				products.add(productMap);
+			}
+			exportMap.put("products", products);
+			String jsonString = JSON.toJSONString(exportMap);
+			//System.out.println("//////////"+jsonString);
+			String exportE = epService.exportE(jsonString);
+			//System.out.println("////"+exportE);
+			HashMap parseObject = JSON.parseObject(exportE, HashMap.class);
+			export.setState(Integer.parseInt(parseObject.get("state").toString()));
+			export.setRemark(parseObject.get("remark").toString());
+			exportService.saveOrUpdate(export);
+			//货物
+			 List<HashMap> parseArray = JSON.parseArray((parseObject.get("products").toString()),HashMap.class);
+			 for (HashMap proMap : parseArray) {
+				ExportProduct exportProduct = exportProductService.get(proMap.get("exportProductId").toString());
+				exportProduct.setTax(Double.valueOf(proMap.get("tax").toString()));
+				exportProductService.saveOrUpdate(exportProduct);
+			}
+		}
+		
+		return "toExportListView";
+	}
+	
+	/**
+	 * 递归查询所有部门Id
+	 */
+	private void  getAllDepts(Set<String> set,Dept dept)
+	{
+		if(dept.getChildDepts()!=null&&dept.getChildDepts().size()>0)
+		{
+			for (Dept children : dept.getChildDepts()) {
+				//没有被删除
+				if(children.getState()==1)
+				{
+					set.add(children.getId());
+					getAllDepts(set, children);
+				}
+				
+			}
+		}
+	}
+	
+	private String[] mr_id;//货物id   
+	private String[] mr_changed;//是否修改
+	private Integer[] mr_cnumber;//数量
+	private Double[] mr_grossWeight;//毛重
+	private Double[] mr_netWeight;//净重
+	private Double[] mr_sizeLength;//长度
+	private Double[] mr_sizeWidth;//宽度
+	private Double[] mr_sizeHeight;//高度
+	private Double[] mr_exPrice;//单价
+	private Double[] mr_tax;//税金
+
+	public String[] getMr_id() {
+		return mr_id;
+	}
+
+	public void setMr_id(String[] mr_id) {
+		this.mr_id = mr_id;
+	}
+
+	public String[] getMr_changed() {
+		return mr_changed;
+	}
+
+	public void setMr_changed(String[] mr_changed) {
+		this.mr_changed = mr_changed;
+	}
+
+	public Integer[] getMr_cnumber() {
+		return mr_cnumber;
+	}
+
+	public void setMr_cnumber(Integer[] mr_cnumber) {
+		this.mr_cnumber = mr_cnumber;
+	}
+
+	public Double[] getMr_grossWeight() {
+		return mr_grossWeight;
+	}
+
+	public void setMr_grossWeight(Double[] mr_grossWeight) {
+		this.mr_grossWeight = mr_grossWeight;
+	}
+
+	public Double[] getMr_netWeight() {
+		return mr_netWeight;
+	}
+
+	public void setMr_netWeight(Double[] mr_netWeight) {
+		this.mr_netWeight = mr_netWeight;
+	}
+
+	public Double[] getMr_sizeLength() {
+		return mr_sizeLength;
+	}
+
+	public void setMr_sizeLength(Double[] mr_sizeLength) {
+		this.mr_sizeLength = mr_sizeLength;
+	}
+
+	public Double[] getMr_sizeWidth() {
+		return mr_sizeWidth;
+	}
+
+	public void setMr_sizeWidth(Double[] mr_sizeWidth) {
+		this.mr_sizeWidth = mr_sizeWidth;
+	}
+
+	public Double[] getMr_sizeHeight() {
+		return mr_sizeHeight;
+	}
+
+	public void setMr_sizeHeight(Double[] mr_sizeHeight) {
+		this.mr_sizeHeight = mr_sizeHeight;
+	}
+
+	public Double[] getMr_exPrice() {
+		return mr_exPrice;
+	}
+
+	public void setMr_exPrice(Double[] mr_exPrice) {
+		this.mr_exPrice = mr_exPrice;
+	}
+
+	public Double[] getMr_tax() {
+		return mr_tax;
+	}
+
+	public void setMr_tax(Double[] mr_tax) {
+		this.mr_tax = mr_tax;
+	}
+}

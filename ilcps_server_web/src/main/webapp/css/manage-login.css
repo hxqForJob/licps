@@ -1,0 +1,97 @@
+html,
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "微软雅黑";
+}
+
+body {
+	background-image: url(../img/manageloginbg.png);
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+	background-size: cover;
+	-moz-background-size: cover;
+	-webkit-background-size: cover;
+}
+#wrap {
+   border:1px solid #000;
+   background:#F00;
+   width:400px;
+   height:400px;
+   display:table; /* FF */
+   *position:relative; /* IE */
+  }
+#subwrap {
+   display:table-cell; /* FF */
+   vertical-align:middle; /* FF */
+   *position:absolute; /* IE */
+   *top:50%; /* IE */
+  }
+.login-box {
+	width: 394px;
+	margin: 0 auto;
+   *position:relative; /* IE */
+   *top:100%; /* IE */
+    color:#FFF;
+	padding: 20px;
+	border:1px solid #fff;
+	*filter:alpha(opacity=80);
+	background-color:#fff;
+	background-color: rgba(255,255,255,.6);
+}
+.login-box h4 {
+	color: #139b92;
+	font-size:24px;
+	text-align: center;
+	line-height: 36px; 
+	font-weight: normal;
+	margin-bottom: 20px;
+}
+form  {
+	margin-top: 10px;
+}
+.form-item {
+	margin-bottom: 20px;
+	border-bottom: 1px solid #909295;
+}
+.form-item .input-icon {
+	display: inline-block;
+	display:inline;
+	*display:inline;
+	line-height: 34px;
+}
+.form-item input {
+	display: inline-block;
+	display:inline;
+	*display:inline;
+	width: 320px;
+	border: 0;
+	padding-left: 5px;
+	line-height: 28px;
+	font-size:16px;
+	background-color: transparent;
+	outline: none;
+	font-family: "微软雅黑";
+}
+.btns  {
+	margin-top: 20px;
+	
+}
+.btns .btn {
+	padding: 8px 55px;
+	margin-right: 8px;
+	font-size:20px;
+    border-radius: 0;
+	text-align: center;
+	color: #fff;
+	border: none;
+	font-family: "微软雅黑";
+}
+.btn-login {
+	background-image: -moz-linear-gradient(top, #1db8ad, #33e2d9); /* Firefox */
+	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #33e2d9), color-stop(1, #1db8ad)); /* Saf4+, Chrome */
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#33e2d9', endColorstr='#1db8ad', GradientType='0'); /* IE*/
+}
+.btn-reset {
+	background-color: #8c8c8c;
+}

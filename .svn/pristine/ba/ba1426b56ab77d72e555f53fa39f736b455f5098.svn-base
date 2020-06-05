@@ -1,0 +1,157 @@
+package com.hxq.service.impl;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.persistence.Entity;
+
+import org.hibernate.action.spi.Executable;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import com.hxq.dao.ContractDao;
+import com.hxq.dao.ContractProductDao;
+import com.hxq.dao.ExportDao;
+import com.hxq.domain.Contract;
+import com.hxq.domain.ContractProduct;
+import com.hxq.domain.Export;
+import com.hxq.domain.ExportProduct;
+import com.hxq.domain.ExtCproduct;
+import com.hxq.domain.ExtEproduct;
+import com.hxq.service.ExportService;
+import com.hxq.utils.UtilFuns;
+
+/**
+ *报运单业务逻辑
+ * @author 强仔
+ *
+ */
+@Service("exportService")
+public class ExportServiceImpl implements ExportService{
+
+	@Autowired
+	private ExportDao exportDao;
+	
+	@Autowired
+	private ContractDao contractDao;
+	
+	@Autowired
+	private ContractProductDao contractProductDao;
+	
+	/**
+	 * 条件查询报运单
+	 */
+	@Override
+	public List<Export> find(Specification<Export> spec) {
+		// TODO Auto-generated method stub
+		return exportDao.findAll(spec);
+	}
+	
+	/**
+	 * 根据id获取报运单
+	 */
+	@Override
+	public Export get(String id) {
+		// TODO Auto-generated method stub
+		return exportDao.findOne(id);
+	}
+
+	/**
+	 * 分页条件查询报运单
+	 */
+	@Override
+	public Page<Export> findPage(Specification<Export> spec, Pageable pageable) {
+		// TODO Auto-generated method stub
+		return exportDao.findAll(spec, pageable);
+	}
+
+	/**
+	 * 保存或者更新报运单
+	 */
+	@Override
+	public void saveOrUpdate(Export entity) {
+		// TODO Auto-generated method stub
+		if(UtilFuns.isEmpty(entity.getId()))
+		{
+			//新增报运单
+			entity.setState(0);
+			entity.setInputDate(new Date());
+			String [] contractIds = entity.getContractIds().split(", ");
+			for (String contratcId : contractIds) {
+				//获取报运的购销合同
+				Contract findOne = contractDao.findOne(contratcId);
+				//修改合同状态为报运状态,
+				findOne.setState(2);
+				contractDao.save(findOne);
+			}
+			//获取购销合同下的货物
+			List<ContractProduct> contractProducts = contractProductDao.findCpByContractIds(contractIds);
+			
+			HashSet<ExportProduct> exportProducts=new HashSet<>();
+			//数据搬家，获取合同下的货物添加到报运明细中
+			for (ContractProduct contractProduct : contractProducts) {
+				ExportProduct exportProduct=new ExportProduct();
+				BeanUtils.copyProperties(contractProduct, exportProduct);
+				exportProduct.setId(null);
+				exportProduct.setExport(entity);
+				exportProducts.add(exportProduct);
+				//数据搬家，获取合同下货物的附件添加到报运附件中
+				HashSet<ExtEproduct> extEproducts=new HashSet<>();
+				for (ExtCproduct extCproduct : contractProduct.getExtCproducts()) {
+					ExtEproduct extEproduct=new ExtEproduct();
+					BeanUtils.copyProperties(extCproduct, extEproduct);
+					extEproduct.setId(null);
+					extEproduct.setExportProduct(exportProduct);
+					extEproducts.add(extEproduct);
+				}
+				exportProduct.setExtEproducts(extEproducts);
+			}
+			entity.setExportProducts(exportProducts);
+			
+		}
+		exportDao.save(entity);
+	}
+
+	/**
+	 * 批量保存或者更新
+	 */
+	@Override
+	public void saveOrUpdateAll(Collection<Export> entitys) {
+		for (Export export : entitys) {
+			exportDao.save(export);
+		}
+	}
+
+	/**
+	 * 删除
+	 */
+	@Override
+	public void deleteById(String id) {
+		// TODO Auto-generated method stub
+		exportDao.delete(id);
+	}
+	
+	
+	/**
+	 * 批量删除
+	 */
+	@Override
+	public void delete(String[] ids) {
+		// TODO Auto-generated method stub
+		for (String string : ids) {
+			exportDao.delete(string);
+		}
+	}
+
+	
+	
+	
+
+}

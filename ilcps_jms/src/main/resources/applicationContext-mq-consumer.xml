@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:amq="http://activemq.apache.org/schema/core"
+	xmlns:jms="http://www.springframework.org/schema/jms"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/data/jpa 
+		http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+		http://www.springframework.org/schema/jms
+        http://www.springframework.org/schema/jms/spring-jms.xsd
+		http://activemq.apache.org/schema/core
+        http://activemq.apache.org/schema/core/activemq-core.xsd">
+	
+	<!-- 扫描包 -->
+	<context:component-scan base-package="com.hxq.*" /> 
+	
+	<!-- ActiveMQ 连接工厂 -->
+    <amq:connectionFactory id="amqConnectionFactory"
+        brokerURL="tcp://localhost:61616" userName="admin" password="admin"  />
+
+    <!-- Spring Caching连接工厂 -->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="amqConnectionFactory"></property>
+        <property name="sessionCacheSize" value="100" />
+    </bean>
+    
+   
+    
+     <!-- Spring JmsTemplate 的消息生产者 start-->
+    <jms:listener-container  destination-type="queue" container-type="default" connection-factory="connectionFactory">
+    <!-- 测试p2p监听器 -->
+      <!--  <jms:listener destination="spring_queue" ref="p2pListenerConsume"/> -->
+       <!-- 短信验证码监听器 -->
+        <jms:listener destination="phoneQueue" ref="phoneCodeConsume"/>
+    </jms:listener-container>
+    
+     <jms:listener-container  destination-type="topic" container-type="default" connection-factory="connectionFactory">
+     <!-- 测试topic监听器 -->
+     <!--   <jms:listener destination="spring_topic" ref="topicListenerConsumer1"/> -->
+        <!-- 测试topic监听器 -->
+       <!-- <jms:listener destination="spring_topic" ref="topicListenerConsumer2" /> -->
+    </jms:listener-container>
+    
+    <import resource="classpath:applicationContext-cache.xml"/>
+</beans>

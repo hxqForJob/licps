@@ -1,0 +1,127 @@
+package com.hxq.web.action;
+
+import java.util.List;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.Namespace;
+import org.apache.struts2.convention.annotation.ParentPackage;
+import org.apache.struts2.convention.annotation.Result;
+import org.apache.struts2.convention.annotation.Results;
+import org.hibernate.jpa.criteria.OrderImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Controller;
+
+import com.hxq.domain.Module;
+import com.hxq.domain.OfenMoudle;
+import com.hxq.domain.User;
+import com.hxq.service.OfenMoudleService;
+import com.hxq.utils.SysConstant;
+
+/**
+ * @Description: 登录,页面跳转
+ * @Author:		
+ * @Company:	
+ * @CreateDate:	
+ */
+@Namespace("/")
+@Results({
+	     @Result(name="title",location="/WEB-INF/pages/home/title.jsp"),
+	     @Result(name="fmain",location="/WEB-INF/pages/home/fmain.jsp"),
+	     @Result(name="toleft",location="/WEB-INF/pages/${moduleName}/left.jsp"),
+	     @Result(name="tomain",location="/WEB-INF/pages/${moduleName}/main.jsp"),
+	     @Result(name="tonoAu",location="/WEB-INF/pages/${moduleName}/noauthor.jsp")
+	     })
+public class HomeAction extends BaseAction{
+	
+	//常用功能业务
+	@Autowired
+	private OfenMoudleService ofenMoudleService;
+	
+	private String moduleName;		//动态指定跳转的模块，在struts.xml中配置动态的result
+	public String getModuleName() {
+		return moduleName;
+	}
+	public void setModuleName(String moduleName) {
+		this.moduleName = moduleName;
+	}
+
+	@Action("homeAction_fmain")
+	public String fmain(){
+		return "fmain";
+	}
+	@Action("homeAction_title")
+	public String title(){
+		return "title";
+	}
+
+	//转向moduleName指向的模块
+	@Action("homeAction_tomain")
+	public String tomain(){
+		return "tomain";
+	}
+	
+	@Action("homeAction_toleft")
+	public String toleft(){
+		
+		final User user = (User)session.get(SysConstant.CURRENT_USER_INFO);
+		//取前五
+		PageRequest pageRequest=new PageRequest(0, 5);
+		//查询当前用户的常用功能
+		Page<OfenMoudle> pages = ofenMoudleService.findPage(new Specification<OfenMoudle>() {
+			
+			@Override
+			public Predicate toPredicate(Root<OfenMoudle> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+				// TODO Auto-generated method stub
+				Predicate predicate = cb.equal(root.get("userId").as(String.class), user.getId());
+				return query.where(predicate).orderBy(new OrderImpl(root.get("times").as(int.class)).reverse()).getRestriction();
+			}
+		},pageRequest);
+		List<OfenMoudle> contetnts = pages.getContent();
+		put("menus", contetnts);
+		return "toleft";
+	}
+	
+	@Action("homeAction_noauthor")
+	public String tonoauthor(){
+		return "tonoAu";
+	}
+	
+	/**
+	 * 清楚常用功能
+	 * @return
+	 */
+	@Action("homeAction_deleteRecordMenu")
+	public String deleteRecordMenu()
+	{
+		//获取当前用户
+		final User user = (User)session.get(SysConstant.CURRENT_USER_INFO);
+		List<OfenMoudle> find = ofenMoudleService.find(new Specification<OfenMoudle>() {
+
+			@Override
+			public Predicate toPredicate(Root<OfenMoudle> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+				// TODO Auto-generated method stub
+				return cb.equal(root.get("userId").as(String.class), user.getId());
+			}
+		});
+		if(find!=null&&find.size()>0)
+		{
+			for (OfenMoudle ofenMoudle : find) {
+				ofenMoudleService.deleteById(ofenMoudle.getId());
+			}
+		}
+		
+		return "toleft";
+	}
+	
+
+}

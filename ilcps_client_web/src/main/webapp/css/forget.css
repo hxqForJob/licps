@@ -1,0 +1,66 @@
+
+html,body{
+	font-family: "微软雅黑";
+	background-color: #F2F2F2;
+	
+}
+a {
+	color:#e84e0e ;
+}
+a:hover {
+	color:#e84e0e ;
+}
+
+/*head*/
+.loginnav {
+	background: #fff;
+}
+.logintitle {
+	font-size: 18px;
+	line-height: 50px;
+	padding-left: 10px;
+	color: #999;
+}
+
+.loginnav .navbar-default {
+	margin-bottom: 0;
+	padding: 10px;
+	background: #fff;
+}
+
+.loginnav .navbar-brand {
+	padding: 0
+}
+/*forgetbox*/
+.forget {
+	padding: 0 0 25px ;
+	margin:15px 0;
+	border: 1px solid #e6e3e3;
+	background-color: #fff;
+}
+.forget .nav-tabs li a {
+	font-size: 15px;
+}
+.forget h4 {
+	background: #b4b4b4;
+    color: #fff;
+    font-size: 18px;
+    padding: 0 0 0 22px;
+    line-height: 44px;
+}
+.forget .type-box {
+	margin: 25px;
+}
+.type-box .tab-content {
+	padding: 25px;
+}
+.btn-forget {
+	border-radius: 0;
+    font-size: 16px;
+    background-color: #e84e0e;
+}
+/*footer*/
+.copyright {
+	line-height: 26px;
+	color: #999;
+}

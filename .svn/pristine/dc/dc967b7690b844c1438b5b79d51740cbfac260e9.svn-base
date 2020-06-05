@@ -1,0 +1,11 @@
+package com.hxq.utils;
+
+/**
+ * 购销合同状态
+ * @author 强仔
+ *
+ */
+public class ContractState {
+	public static final int SUBMMIT=1;//提交
+	public static final int CANCEL=0;//
+}

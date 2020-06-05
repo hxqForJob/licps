@@ -1,0 +1,154 @@
+package com.hxq.service.impl;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.persistence.Entity;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import com.hxq.dao.ContractDao;
+import com.hxq.dao.ContractProductDao;
+import com.hxq.dao.ExtCproductDao;
+import com.hxq.domain.Contract;
+import com.hxq.domain.ContractProduct;
+import com.hxq.domain.ExtCproduct;
+import com.hxq.domain.ExtCproduct;
+import com.hxq.service.ExtCproductService;
+import com.hxq.utils.UtilFuns;
+
+/**
+ *附件业务逻辑
+ * @author 强仔
+ *
+ */
+@Service("extCproductService")
+public class ExtCproductServiceImpl implements ExtCproductService{
+
+	@Autowired
+	private ExtCproductDao extCproductDao;
+	
+	@Autowired
+	private ContractDao contractDao;
+	
+	@Autowired
+	private ContractProductDao contractProductDao;;
+	
+	/**
+	 * 条件查询附件
+	 */
+	@Override
+	public List<ExtCproduct> find(Specification<ExtCproduct> spec) {
+		// TODO Auto-generated method stub
+		return extCproductDao.findAll(spec);
+	}
+	
+	/**
+	 * 根据id获取附件
+	 */
+	@Override
+	public ExtCproduct get(String id) {
+		// TODO Auto-generated method stub
+		return extCproductDao.findOne(id);
+	}
+
+	/**
+	 * 分页条件查询附件
+	 */
+	@Override
+	public Page<ExtCproduct> findPage(Specification<ExtCproduct> spec, Pageable pageable) {
+		// TODO Auto-generated method stub
+		return extCproductDao.findAll(spec, pageable);
+	}
+
+	/**
+	 * 保存或者更新附件
+	 */
+	@Override
+	public void saveOrUpdate(ExtCproduct entity) {
+		// TODO Auto-generated method stub
+		Double totalMoney=0.0;
+		if(UtilFuns.isNotEmpty(entity.getPrice())&&UtilFuns.isNotEmpty(entity.getCnumber()))
+		{
+			
+			totalMoney=entity.getPrice()*entity.getCnumber();
+		}
+		if(UtilFuns.isEmpty(entity.getId()))
+		{
+			//新增
+			
+			
+			//数量和单价不为空,分散计算
+			entity.setAmount(totalMoney);
+			
+			//分散增加购销合同金额
+			Contract contract = contractDao.findOne(entity.getContractProduct().getContract().getId());
+			contract.setTotalAmount(contract.getTotalAmount()+totalMoney);
+			contractDao.save(contract);
+		}
+		else {
+			//修改
+			Double oldTotalMoney=extCproductDao.findOne(entity.getId()).getAmount();
+			if(oldTotalMoney!=totalMoney)
+			{
+				entity.setAmount(totalMoney);
+				//分散修改购销合同总金额
+				Contract contract = contractDao.findOne(entity.getContractProduct().getContract().getId());
+				contract.setTotalAmount(contract.getTotalAmount()-oldTotalMoney+totalMoney);
+				contractDao.save(contract);
+			}
+		}
+		extCproductDao.save(entity);
+	}
+
+	/**
+	 * 批量保存或者更新
+	 */
+	@Override
+	public void saveOrUpdateAll(Collection<ExtCproduct> entitys) {
+		for (ExtCproduct extCproduct : entitys) {
+			extCproductDao.save(extCproduct);
+		}
+	}
+
+	/**
+	 * 删除
+	 */
+	@Override
+	public void deleteById(String id) {
+		// TODO Auto-generated method stub
+		//获得附件
+		ExtCproduct findOne = extCproductDao.findOne(id);
+		
+		
+		//购销合同减去删除的附件金额
+		Contract contract = contractDao.findOne(findOne.getContractProduct().getContract().getId());
+		contract.setTotalAmount(contract.getTotalAmount()-findOne.getAmount());
+		contractDao.save(contract);
+		//删除附件
+		extCproductDao.delete(id);
+		
+	}
+	
+	
+	/**
+	 * 批量删除
+	 */
+	@Override
+	public void delete(String[] ids) {
+		// TODO Auto-generated method stub
+		for (String string : ids) {
+			extCproductDao.delete(string);
+		}
+	}
+
+	
+	
+	
+
+}
