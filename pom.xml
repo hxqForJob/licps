@@ -14,7 +14,7 @@
 		<cxf.version>3.0.1</cxf.version>
 		<c3p0.version>0.9.1.2</c3p0.version>
 		<springdataredis.version>1.7.4.RELEASE</springdataredis.version>
-		<mysql.version>5.1.6</mysql.version>
+		<mysql.version>8.0.16</mysql.version>
 
 	</properties>
 
